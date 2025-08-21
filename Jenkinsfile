@@ -25,7 +25,6 @@ pipeline {
         stage("Update the Deployment Tags") {
             steps {
                 sh """
-                   cat deployment.yaml
                    sed -i 's|${APP_NAME}:.*|${APP_NAME}:${IMAGE_TAG}|g' deployment.yaml
                    cat deployment.yaml
                 """
@@ -34,14 +33,14 @@ pipeline {
 
         stage("Push the changed deployment file to Git") {
             steps {
-                sh """
-                   git config --global user.name "devopspractice8"
-                   git config --global user.email "devopspractic05@gmail.com"
-                   git add deployment.yaml
-                   git commit -m "Updated Deployment Manifest with ${IMAGE_TAG}"
-                """
-                withCredentials([gitUsernamePassword(credentialsId: 'git-cred', gitToolName: 'Default')]) {
-                    sh "git push https://github.com/devopspractice8/gitops-register-app.git main"
+                withCredentials([usernamePassword(credentialsId: 'git-cred', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    sh """
+                       git config --global user.name "devopspractice8"
+                       git config --global user.email "devopspractic05@gmail.com"
+                       git add deployment.yaml
+                       git commit -m "Updated Deployment Manifest with ${IMAGE_TAG}" || echo "No changes to commit"
+                       git push https://${GIT_USER}:${GIT_PASS}@github.com/devopspractice8/gitops-register-app.git main
+                    """
                 }
             }
         }
