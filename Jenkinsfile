@@ -1,7 +1,12 @@
 pipeline {
     agent any
+
+    parameters {
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker Image Tag to deploy')
+    }
+
     environment {
-              APP_NAME = "register-app-pipeline"
+        APP_NAME = "register-app-pipeline"
     }
 
     stages {
@@ -12,16 +17,16 @@ pipeline {
         }
 
         stage("Checkout from SCM") {
-               steps {
-                   git branch: 'main', credentialsId: 'git-cred', url: 'https://github.com/devopspractice8/gitops-register-app.git'
-               }
+            steps {
+                git branch: 'main', credentialsId: 'git-cred', url: 'https://github.com/devopspractice8/gitops-register-app.git'
+            }
         }
 
         stage("Update the Deployment Tags") {
             steps {
                 sh """
                    cat deployment.yaml
-                   sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g' deployment.yaml
+                   sed -i 's|${APP_NAME}:.*|${APP_NAME}:${IMAGE_TAG}|g' deployment.yaml
                    cat deployment.yaml
                 """
             }
@@ -33,13 +38,12 @@ pipeline {
                    git config --global user.name "devopspractice8"
                    git config --global user.email "devopspractic05@gmail.com"
                    git add deployment.yaml
-                   git commit -m "Updated Deployment Manifest"
+                   git commit -m "Updated Deployment Manifest with ${IMAGE_TAG}"
                 """
                 withCredentials([gitUsernamePassword(credentialsId: 'git-cred', gitToolName: 'Default')]) {
-                  sh "git push https://github.com/devopspractice8/gitops-register-app.git main"
+                    sh "git push https://github.com/devopspractice8/gitops-register-app.git main"
                 }
             }
         }
-      
     }
 }
